@@ -1,11 +1,36 @@
 #include<stdint.h>
 #include<stdio.h>
 #include<stdlib.h>
+#include<string.h>
 #ifdef _WIN32
+#include<windows.h>
 #else
 #include<sys/stat.h>
 #endif
-int loaddict(const char *fname, char ***dictp, size_t len)
+#include"load.h"
+
+char **cptt____dict;
+size_t cptt____dictlen;
+
+int findload(void)
+{
+	const char *fpath = "ttdict.txt";
+	int succ = loaddict(fpath, &cptt____dict, &cptt____dictlen);
+	if(succ)
+#ifdef _WIN32
+		succ = -1;
+#else
+	{
+		char homedict[2601];
+		strcpy(homedict, getenv("HOME"));
+		strcat(homedict, "/.ttdict.txt");
+		succ = loaddict(homedict, &cptt____dict, &cptt____dictlen);
+	}
+#endif
+	return succ;
+}
+
+int loaddict(const char *fname, char ***dictp, size_t *len)
 {
 #ifdef _WIN32
 	WIN32_FIND_DATAA fdat;
@@ -32,14 +57,30 @@ int loaddict(const char *fname, char ***dictp, size_t len)
 			{
 				setvbuf(fh, NULL, _IONBF, 0);
 				fread(cont, 1, fsz, fh);
-				size_t lns = 0;
+				size_t lns = 0, totlen = fsz;
 				for(const char *it = cont; it != cont + fsz; ++it)
 					lns += *it == '\n';
-				size_t totlen = fsz - lns;
 				lns += cont[fsz - 1] != '\n';
+				totlen += cont[fsz - 1] != '\n';
 				char **dict = malloc(totlen * sizeof(**dict) + lns * sizeof(*dict));
 				if(dict)
 				{
+					size_t cnt = 0;
+					char *dictit = (char *)(dict + lns);
+					dict[0] = dictit;
+					for(const char *it = cont; it != cont + fsz; ++dictit, ++it)
+					{
+						if(*it == '\n')
+						{
+							++cnt;
+							*dictit = '\0';
+							dict[cnt] = dictit + 1;
+						}
+						else
+							*dictit = *it;
+					}
+					if(cont[fsz - 1] != '\n')
+						*dictit = '\0';
 				}
 				else
 				{
@@ -50,22 +91,29 @@ int loaddict(const char *fname, char ***dictp, size_t len)
 					if(dict)
 					{
 						cont = (char*)dict;
-						cont += dictsz - fsz;
+						cont += lns * sizeof(*dict);
 						fseek(fh, 0, SEEK_SET);
-						fread(cont , 1, fsz, fh);
-						size_t pushcnt = 0;
-						for(int64_t i = fsz - 1; i >= 0; --i)
+						fread(cont, 1, fsz, fh);
+						size_t cnt = 0;
+						dict[0] = cont;
+						for(size_t i = 0; i < fsz; ++i)
 						{
 							if(cont[i] == '\n')
-								++pushcnt;
-							else if(pushcnt > 0)
-								cont[i + pushcnt] = cont[i];
+							{
+								cont[i] = '\0';
+								++cnt;
+								dict[cnt] = cont + i + 1;
+							}
 						}
+						if(cont[fsz - 1] != '\n')
+							cont[fsz] = '\0';
 					}
 					else
 						succ = -1;
 				}
 				fclose(fh);
+				*dictp = dict;
+				*len = lns;
 			}
 			else
 				succ = -1;
@@ -74,9 +122,4 @@ int loaddict(const char *fname, char ***dictp, size_t len)
 			succ = -1;
 	}
 	return succ;
-}
-
-int findload(void)
-{
-	return 0;
 }
