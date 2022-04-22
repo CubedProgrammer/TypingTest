@@ -42,6 +42,7 @@ int main(int argl, char *argv[])
 		curr.c_lflag &= ~(ECHO | ICANON);
 		tcsetattr(STDIN_FILENO, TCSANOW, &curr);
 		struct timeval onesec;
+		fd_set rset, *rsetp = &rset;
 #endif
 		fputs("Starting in 5", stdout);
 		mssleep(997);
@@ -59,6 +60,7 @@ int main(int argl, char *argv[])
 		for(int i = 0; i < 8; ++i)
 			dice = nextrand(dice), indices[i] = dice % dlen;
 		const char *currstr;
+		const char *ita, *itb;
 		time_t begin = getms(), rn = begin + 1;
 		int secleft, ready;
 		char typed[60] = "";
@@ -74,9 +76,14 @@ int main(int argl, char *argv[])
 				printf(" %s", dict[indices[i]]);
 			putchar('\n');
 			fputs(clearln, stdout);
-			fputs(typed, stdout);
+			fputs("\033\13332m", stdout);
+			for(ita = typed, itb = currstr; *itb != '\0' && *ita == *itb; ++ita, ++itb)
+				putchar(*ita);
+			fputs("\033\13331m", stdout);
+			for(; *ita != '\0'; ++ita)
+				putchar(*ita);
+			fputs("\033\133m", stdout);
 #ifndef _WIN32
-			fd_set rset, *rsetp = &rset;
 			FD_ZERO(rsetp);
 			FD_SET(STDIN_FILENO, rsetp);
 			onesec.tv_sec = 0;
