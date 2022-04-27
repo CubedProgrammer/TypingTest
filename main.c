@@ -1,7 +1,9 @@
 #include<stdio.h>
+#include<stdlib.h>
 #include<string.h>
 #include<time.h>
 #ifdef _WIN32
+#include<conio.h>
 #include<windows.h>
 #define mssleep Sleep
 #define gch getch()
@@ -62,14 +64,17 @@ int main(int argl, char *argv[])
 		const char *currstr;
 		const char *ita, *itb;
 		time_t begin = getms(), rn = begin + 1;
+		time_t timer = 60000;
+		if(argv[1] != NULL)
+			timer = atoi(argv[1]) * 1000;
 		int secleft, ready;
 		char typed[60] = "";
 		size_t chtyped = 0, completed = 0;
 		char ch;
-		for(;rn - begin < 60000; rn = getms())
+		for(;rn - begin < timer; rn = getms())
 		{
 			currstr = dict[indices[0]];
-			secleft = begin + 60000 - rn;
+			secleft = begin + timer - rn;
 			secleft /= 1000;
 			printf("%i:%02i %zu\n%s", secleft / 60, secleft % 60, completed, currstr);
 			for(int i = 1; i < 8; ++i)
