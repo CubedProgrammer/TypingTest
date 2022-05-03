@@ -70,6 +70,7 @@ int main(int argl, char *argv[])
 		int secleft, ready;
 		char typed[60] = "";
 		size_t chtyped = 0, completed = 0;
+		size_t tottyped = 0, accurate = 0;
 		char ch;
 		for(;rn - begin < timer; rn = getms())
 		{
@@ -134,17 +135,25 @@ int main(int argl, char *argv[])
 						}
 					default:
 						typed[chtyped] = ch;
+						++tottyped;
+						if(chtyped < strlen(currstr))
+						{
+							if(ch == currstr[chtyped])
+								++accurate;
+						}
 						++chtyped;
 				}
 #ifndef _WIN32
 			}
 #endif
-			fputs("\033\1332F", stdout);
+			fputs("\033\133F", stdout);
+			fputs(clearln, stdout);
+			fputs("\033\133F", stdout);
 		}
 		rn -= begin;
 		double score = completed * 60000;
 		score /= rn;
-		printf("%.3f words/min\n", score);
+		printf("%zu characters typed, %zu correct.\n%.3f words/min\n", tottyped, accurate, score);
 #ifndef _WIN32
 		tcsetattr(STDIN_FILENO, TCSANOW, &old);
 #endif
