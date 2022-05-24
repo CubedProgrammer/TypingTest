@@ -29,6 +29,7 @@ int main(int argl, char *argv[])
 	clearln[60] = '\r';
 	clearln[61] = '\0';
 	int succ = findload();
+	char sequential = 0;
 	if(succ == 0)
 	{
 #ifdef _WIN32
@@ -59,14 +60,27 @@ int main(int argl, char *argv[])
 		size_t dlen = cptt____dictlen;
 		size_t indices[8];
 		size_t dice = time(NULL) ^ SLOPE;
-		for(int i = 0; i < 8; ++i)
-			dice = nextrand(dice), indices[i] = dice % dlen;
+		time_t timer = 60000;
+		for(int i = 1; i < argl; ++i)
+		{
+			if(strcmp(argv[i], "-s") == 0)
+				sequential = 1;
+			else
+				timer = atoi(argv[i]) * 1000;
+		}
+		if(sequential)
+		{
+			for(int i = 0; i < 8; ++i)
+				indices[i] = i;
+		}
+		else
+		{
+			for(int i = 0; i < 8; ++i)
+				dice = nextrand(dice), indices[i] = dice % dlen;
+		}
 		const char *currstr;
 		const char *ita, *itb;
 		time_t begin = getms(), rn = begin + 1;
-		time_t timer = 60000;
-		if(argv[1] != NULL)
-			timer = atoi(argv[1]) * 1000;
 		int secleft, ready;
 		char typed[60] = "";
 		size_t chtyped = 0, completed = 0;
@@ -128,9 +142,16 @@ int main(int argl, char *argv[])
 							chtyped = 0;
 							for(int i = 0; i < 7; ++i)
 								indices[i] = indices[i + 1];
-							dice = nextrand(dice);
-							indices[7] = dice % dlen;
+							if(sequential)
+								indices[7] = indices[6] == dlen - 1 ? 0 : indices[6] + 1;
+							else
+							{
+								dice = nextrand(dice);
+								indices[7] = dice % dlen;
+							}
 							++completed;
+							if(sequential && completed == dlen)
+								timer = getms() - begin;
 							break;
 						}
 					default:
