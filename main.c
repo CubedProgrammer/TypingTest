@@ -28,8 +28,32 @@ int main(int argl, char *argv[])
 	memset(clearln, ' ', 60);
 	clearln[60] = '\r';
 	clearln[61] = '\0';
-	int succ = findload();
 	char sequential = 0;
+	time_t timer = 60000;
+	const char *dictfile = NULL;
+	for(int i = 1; i < argl; ++i)
+	{
+		if('-' == argv[i][0])
+		{
+			for(const char *it = argv[i] + 1; *it != '\0'; ++it)
+			{
+				switch(*it)
+				{
+					case'd':
+						dictfile = argv[++i];
+						break;
+					case's':
+						sequential = 1;
+						break;
+					case't':
+						if(i + 1 < argl)
+							timer = atoi(argv[++i]) * 1000;
+						break;
+				}
+			}
+		}
+	}
+	int succ = dictfile == NULL ? findload() : loaddict(dictfile, &cptt____dict, &cptt____dictlen);
 	if(succ == 0)
 	{
 #ifdef _WIN32
@@ -60,14 +84,6 @@ int main(int argl, char *argv[])
 		size_t dlen = cptt____dictlen;
 		size_t indices[8];
 		size_t dice = time(NULL) ^ SLOPE;
-		time_t timer = 60000;
-		for(int i = 1; i < argl; ++i)
-		{
-			if(strcmp(argv[i], "-s") == 0)
-				sequential = 1;
-			else
-				timer = atoi(argv[i]) * 1000;
-		}
 		if(sequential)
 		{
 			for(int i = 0; i < 8; ++i)
