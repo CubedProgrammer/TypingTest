@@ -108,8 +108,19 @@ int main(int argl, char *argv[])
 			secleft = begin + timer - rn;
 			secleft /= 1000;
 			printf("%i:%02i %zu\n%s", secleft / 60, secleft % 60, completed, currstr);
-			for(int i = 1; i < 8; ++i)
-				printf(" %s", dict[indices[i]]);
+			if(sequential)
+			{
+				for(int i = 1; i < 8; ++i)
+				{
+					if(indices[i] < dlen)
+						printf(" %s", dict[indices[i]]);
+				}
+			}
+			else
+			{
+				for(int i = 1; i < 8; ++i)
+					printf(" %s", dict[indices[i]]);
+			}
 			putchar('\n');
 			fputs(clearln, stdout);
 			fputs("\033\13332m", stdout);
@@ -159,7 +170,7 @@ int main(int argl, char *argv[])
 							for(int i = 0; i < 7; ++i)
 								indices[i] = indices[i + 1];
 							if(sequential)
-								indices[7] = indices[6] == dlen - 1 ? 0 : indices[6] + 1;
+								indices[7] = indices[6] + 1;
 							else
 							{
 								dice = nextrand(dice);
